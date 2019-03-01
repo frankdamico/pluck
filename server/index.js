@@ -1,5 +1,7 @@
 require('dotenv').config();
 require('../NewFAndV');
+const axios = require('axios');
+const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
 const dbHelpers = require('../database/index.js');
@@ -29,6 +31,26 @@ app.get('/toggledonplants', (req, res) => {
       res.status(500).send('Problem occured while reteiving plants');
     } else {
       res.status(200).send(plants);
+    }
+  });
+});
+
+app.put('/toggle', (req, res) => {
+  dbHelpers.updatePlantToggled(req.body.idplant, (err, plant) => {
+    if (err) {
+      res.status(500).send("Couldn't update plant toggeld status");
+    } else {
+      res.status(202).send(plant);
+    }
+  });
+});
+
+app.get('/plantnames', (req, res) => {
+  dbHelpers.selectAllPlantNames((err, plantnames) => {
+    if (err) {
+      res.status(500).send('Error in retrieving plant names from the database');
+    } else {
+      res.status(200).send(plantnames);
     }
   });
 });
@@ -153,15 +175,46 @@ app.put('/user/login', (req, res) => {
 
 // function to catch get req from client zipcode view
 app.get('/zipcode', (req, res) => {
-  console.log(req.query);
-  // get all plants in the zipcode
-  dbHelpers.selectAllZipcodePlants(parseInt(req.query.zipcode), (err, plants) => {
+  dbHelpers.selectAllZipcodePlants(req.query.zipcode, (err, plants) => {
     if (err) {
-      console.log(err);
-      res.status(500).send('COULD NOT RETRIEVE NEARBY PLANTS');
+      res.status(500).send("Error in retieving the zipcode's plants");
     } else {
-      // send back the plants
-      res.status(200).send(plants);
+      dbHelpers.selectAllComments((err2, comments) => {
+        if (err2) {
+          res.status(500).send("Error in retieving comments");
+        }
+        const plantIds = _.uniq(_.map(comments, (comment) => {
+          return comment.idplant;
+        }));
+        const plantsWithComments = [];
+        const filteredPlants = _.filter(plants, (plant) => {
+          return _.includes(plantIds, plant.id);
+        });
+        const unfilteredPlants = _.filter(plants, (plant) => {
+          return !_.includes(plantIds, plant.id);
+        });
+        _.forEach(filteredPlants, (filteredPlant, index) => {
+          dbHelpers.selectAllPlantsComments(filteredPlant.id, (err3, plantComments) => {
+            if (err3) {
+              res.status(500).send('Error while getting comments');
+            } else {
+              filteredPlant.comments = plantComments;
+              plantsWithComments.push(filteredPlant);
+              if (index === filteredPlants.length - 1) {
+                res.status(200).send(_.map(_.sortBy(_.concat(plantsWithComments, unfilteredPlants), ['id']), ((finalplant) => {
+                  if (!finalplant.comments) {
+                    finalplant.comments = [];
+                    finalplant.numComments = 0;
+                    return finalplant;
+                  }
+                  finalplant.numComments = finalplant.comments.length;
+                  return finalplant;
+                })));
+              }
+            }
+          });
+        });
+      });
     }
   });
   // call helper function from database
@@ -234,7 +287,13 @@ app.post('/comments', (req, res) => {
 });
 
 app.get('/plant/comments', (req, res) => {
-
+  dbHelpers.selectAllPlantsComments(req.query.idplant, (err, comments) => {
+    if (err) {
+      res.status(500).send("Cannot get plant's comments");
+    } else {
+      res.status(200).send(comments);
+    }
+  });
 });
 // function to catch get from client plant list view
 //   get req to api for directions to plant

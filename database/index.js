@@ -596,20 +596,23 @@ module.exports.selectAllPlantsComments = (idplant, callback) => {
     } else {
       // send back comments
       const commentHolder = [];
-      _.forEach(comments, (comment, index) => {
-        module.exports.selectUserById(comment.iduser, (err2, user) => {
-          if (err2) {
-            callback(err2, null);
-          } else {
-            comment.username = user.username;
-            commentHolder.push(comment);
-            if (index === comments.length - 1) {
-              callback(null, commentHolder);
+      if (comments.length !== 0) {
+        _.forEach(comments, (comment, index) => {
+          module.exports.selectUserById(comment.iduser, (err2, user) => {
+            if (err2) {
+              callback(err2, null);
+            } else {
+              comment.username = user.username;
+              commentHolder.push(comment);
+              if (index === comments.length - 1) {
+                callback(null, commentHolder);
+              }
             }
-          }
+          });
         });
-      });
-      callback(null, comments);
+      } else {
+        callback(null, commentHolder);
+      }
     }
   });
 };
@@ -673,6 +676,56 @@ module.exports.selectAllToggledOnPlants = (callback) => {
           }
         });
       });
+    }
+  });
+};
+
+module.exports.updatePlantToggled = (idplant, callback) => {
+  module.exports.selectPlantById(idplant, (err, plant) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      let newVal;
+      if (plant.toggled === 0) {
+        newVal = 1;
+      } else {
+        newVal = 0;
+      }
+      connection.query(`UPDATE plants SET toggled = ${newVal} WHERE id = ${idplant}`, (err2) => {
+        if (err2) {
+          callback(err2, null);
+        } else {
+          module.exports.selectPlantById(idplant, (err3, updatedPlant) => {
+            if (err3) {
+              callback(err3, null);
+            } else {
+              callback(null, updatedPlant);
+            }
+          });
+        }
+      });
+    }
+  });
+};
+
+module.exports.selectPlantById = (idplant, callback) => {
+  connection.query(`SELECT * FROM plants WHERE id = ${idplant}`, (err, singlePlantArray) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, singlePlantArray[0]);
+    }
+  });
+};
+
+module.exports.selectAllPlantNames = (callback) => {
+  module.exports.selectAllPlantData((err, plants) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, _.map(plants, (plant) => {
+        return plant.planttype;
+      }).sort());
     }
   });
 };

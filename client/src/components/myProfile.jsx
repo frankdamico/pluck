@@ -58,6 +58,19 @@ class MyProfile extends React.Component {
     this.setState({ open: false });
   }
 
+  // Get user plant on profile mount
+  componentDidMount() {
+    const componentThis = this;
+    axios({
+      method: 'get',
+      url: `/user/profile?username=${componentThis.state.username}`,
+    }).then((aResponse) => {
+      componentThis.setState({ userPlants: aResponse.data });
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+
 // render username, zip, and user plants dynamically
   render() {
     const { classes } = this.props;
@@ -95,7 +108,7 @@ class MyProfile extends React.Component {
                 />
                 <CardMedia
                   className={classes.media}
-                  image={plant.image_url}
+                  image={plant.imagelink}
                   title={plant.title}
                 />
                 <CardContent>

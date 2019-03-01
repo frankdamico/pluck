@@ -1,5 +1,6 @@
 import React from 'react';
 import axios from 'axios';
+import _ from 'lodash';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { withStyles } from '@material-ui/core/styles';
@@ -29,7 +30,7 @@ const styles = theme => ({
 });
 
 // for drop down
-const currencies = [
+let currencies = [
   {
     value: 'Strawberries',
     label: 'Strawberries',
@@ -72,6 +73,19 @@ const currencies = [
   },
 ];
 
+axios.get('/plantnames').then((result) => {
+  const plantArray = [];
+  _.forEach(result.data, (plantname) => {
+    const obj = {};
+    obj.value = plantname;
+    obj.label = plantname;
+    plantArray.push(obj);
+  });
+  currencies = plantArray;
+}).catch((err) => {
+  console.log(err);
+});
+
 class PlantProfile extends React.Component {
   constructor(props) {
     super(props);
@@ -82,6 +96,8 @@ class PlantProfile extends React.Component {
       loggedIn: false,
       currency: 'Select',
       username: props.username,
+      plantAddress: '',
+      plantZipcode: '',
     };
     this.getPlantType = this.getPlantType.bind(this);
     this.fileSelectHandler = this.fileSelectHandler.bind(this);
@@ -100,6 +116,14 @@ class PlantProfile extends React.Component {
     if (event.target.id === 'description') {
       this.setState({
         description: event.target.value,
+      });
+    } else if (event.target.id === 'plantAddress') {
+      this.setState({
+        plantAddress: event.target.value,
+      });
+    } else if (event.target.id === 'plantZipcode') {
+      this.setState({
+        plantZipcode: event.target.value,
       });
     }
   }
@@ -191,11 +215,11 @@ class PlantProfile extends React.Component {
       method: 'post',
       url: '/plant/user',
       data: {
-        username: 'acreed1998' || this.state.username,
-        currency: 'Apples' || this.state.currency,
-        address: 'Pretend This String Is An Address' || this.state.address,
-        zipcode: '70115' || this.state.zipcode,
-        description: 'This is a description' || this.state.description,
+        username: this.state.username,
+        currency: this.state.currency,
+        address: this.state.plantAddress,
+        zipcode: this.state.plantZipcode,
+        description: this.state.description,
       },
     })
       .then((res) => { console.log(res); })
@@ -245,7 +269,8 @@ class PlantProfile extends React.Component {
           </TextField>
         </form>
         <form className={classes.container} noValidate autoComplete="off">
-
+          <TextField id="plantAddress" label="Address" className={classes.textField} margin="normal" variant="outlined" onChange={this.onChange} SelectProps={{ MenuProps: { className: classes.menu } }} />
+          <TextField id="plantZipcode" label="Zipcode" className={classes.textField} margin="normal" variant="outlined" onChange={this.onChange} SelectProps={{ MenuProps: { className: classes.menu } }} />
           <TextField
             id="description"
             label="description"
