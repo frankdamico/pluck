@@ -29,7 +29,10 @@ const theme = createMuiTheme({
     primary: { main: black[900] },
     secondary: { main: '#11cb5f' }, // This is just green.A700 as hex.
   },
-  typography: { color: 'white' },
+  typography: { 
+    color: 'white',
+    useNextVariants: true,
+  },
 });
 
 const styles = {
