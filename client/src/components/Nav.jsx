@@ -139,7 +139,7 @@ class ButtonAppBar extends React.Component {
               >
                 <MenuIcon />
               </IconButton>
-              <NavLink to="/"> <img className="logo" src={require('./pluck.png')}></img></NavLink>
+              <NavLink to="/"> <img className="logo" src={require('../images/pluck.png')}></img></NavLink>
               <Typography variant="h6" color="inherit" className={classes.grow}>
                         p l u c k
               </Typography>

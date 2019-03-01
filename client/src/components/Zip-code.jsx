@@ -70,7 +70,7 @@ class ComposedTextField extends React.Component {
 
     return (
       <div>
-        <img className="logo-body" src={require('../PLUCK-logo-02.png')} />
+        <img className="logo-body" src={require('../images/PLUCK-logo-02.png')} />
         <div className="zip-body">
           <FormControl className={classes.formControl} variant="outlined">
             <InputLabel

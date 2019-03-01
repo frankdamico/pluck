@@ -1,33 +1,22 @@
 const mysql = require('mysql');
-// require('dotenv').config();
 const _ = require('lodash');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 
-// the SENSITIVEDATA is git ignored. Remake locally for testing // replaced file with env variables
-
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ POSSIBLY USELESS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
 const connection = mysql.createConnection({
   host: process.env.DBHOST,
-  // user: 'root',
   user: process.env.DBUSERNAME,
-  // password: 'password',
   password: process.env.DBPASSWORD,
   database: process.env.DBNAME,
-  // database: 'pluck',
 });
 
 connection.connect((err) => {
-  if (err) {
-    console.log('There Was A Problem Connecting To The DB');
+  if (!err) {
+    console.log('Houston, we have a db connection');
   } else {
-    console.log('DB Connection Established');
+    console.error('There was a problem connecting to the db. Error: ', err);
   }
 });
-
-module.exports.connection = connection;
 
 // DB HELPERS //
 // all functions are named to explicitly state usage
@@ -142,9 +131,17 @@ module.exports.selectUsersByUsername = (username, callback) => {
       callback(err, null);
     } else {
       // send back the user whose name matches the input
-      callback(null, _.filter(users, (user) => {
-        return user.username === username;
-      })[0]);
+      callback(null, _.filter(users, user => user.username === username)[0]);
+    }
+  });
+};
+
+module.exports.selectUserById = (iduser, callback) => {
+  connection.query(`SELECT * FROM users WHERE id = ${iduser}`, (err, singleUserArray) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      callback(null, singleUserArray[0]);
     }
   });
 };
@@ -204,7 +201,8 @@ module.exports.insertPlant = (iduser, plant, address, zipcode, description, call
   });
 };
 
-// module.exports.insertPlant('Apples', '1725 Delachaise St., Apt#108, New Orleans, LA', 70115, 1, (err, res) => {
+// module.exports
+// .insertPlant('Apples', '1725 Delachaise St., Apt#108, New Orleans, LA', 70115, 1, (err, res) => {
 //   return err;
 // });
 
@@ -350,9 +348,7 @@ module.exports.selectAllUsersPlants = (iduser, callback) => {
       callback(err, null);
     } else {
       // get an array of plant ids
-      const plantIds = _.map(combos, (combo) => {
-        return combo.idplant;
-      });
+      const plantIds = _.map(combos, combo => combo.idplant);
       // array for holding the plants that we are going to return
       const returnPlants = [];
       _.forEach(plantIds, (id, index) => {
@@ -382,9 +378,7 @@ module.exports.selectAllUsersLikes = (iduser, callback) => {
   // get all likes that are assigned to a specific user id
   connection.query(`SELECT * FROM usersLiked WHERE iduser = ${iduser}`, (err, ids) => {
     // get all of the plant ids
-    const plantIds = _.map(ids, (combo) => {
-      return combo.idplant;
-    });
+    const plantIds = _.map(ids, combo => combo.idplant);
     // array to return that will hold plant objects
     const returnPlants = [];
     if (plantIds.length === 0) {
@@ -393,9 +387,9 @@ module.exports.selectAllUsersLikes = (iduser, callback) => {
     } else {
       _.forEach(plantIds, (id, index) => {
         // get a single plants data
-        module.exports.selectSinglePlant(id, (err, plant) => {
-          if (err) {
-            callback(err, null);
+        module.exports.selectSinglePlant(id, (error, plant) => {
+          if (error) {
+            callback(error, null);
           } else {
             // push the plants object of data to the array
             returnPlants.push(plant);
@@ -419,7 +413,7 @@ module.exports.insertPlantData = (planttype, imagelink, callback) => {
     } else {
       // get all plant names
       const plants = _.map(oldPlants, (oldPlant) => {
-        return oldPlant['planttype'];
+        return oldPlant.planttype;
       });
       if (!_.includes(plants, planttype)) {
         // if plant doesn't exist, add to db
@@ -452,7 +446,7 @@ module.exports.selectAllPlantData = (callback) => {
     if (err) {
       callback(err, null);
     } else {
-      //send all plants in array
+      // send all plants in array
       callback(null, plants);
     }
   });
@@ -519,7 +513,8 @@ module.exports.updateUserLikedPlant = (iduser, idplant, callback) => {
           }
         });
       } else {
-        // if they already have liked the plant, assume that they don't like it anymore and delete it from their likes
+        // if they already have liked the plant, 
+        // assume that they don't like it anymore and delete it from their likes
         connection.query(`DELETE FROM usersLiked WHERE iduser = ${iduser} AND idplant = ${idplant}`, (err4, res) => {
           if (err4) {
             callback(err4, null);
@@ -547,4 +542,137 @@ module.exports.updateUserLikedPlant = (iduser, idplant, callback) => {
   });
 };
 
+module.exports.insertComment = (iduser, idplant, comment, callback) => {
+  // get the date
+  const date = new Date();
+  const q = [parseInt(iduser), parseInt(idplant), comment, date.getHours(), date.getMinutes()];
+  // insert new comment
+  connection.query('INSERT INTO comments (iduser, idplant, comment, hourcreated, minutecreated) VALUES (?, ?, ?, ?, ?)', q, (err) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      // get all comments
+      module.exports.selectAllComments((err2, comments) => {
+        if (err2) {
+          callback(err2, null);
+        } else {
+          // send back the comment we just created
+          callback(null, comments[comments.length - 1]);
+        }
+      });
+    }
+  });
+};
 
+module.exports.selectAllComments = (callback) => {
+  // get all comments
+  connection.query('SELECT * FROM comments', (err, comments) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      // send back the comments
+      callback(null, comments);
+    }
+  });
+};
+
+module.exports.selectAllUsersComments = (iduser, callback) => {
+  // get all comments with a specific user id
+  connection.query(`SELECT * FROM comments WHERE iduser = ${iduser}`, (err, comments) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      // send back the comments
+      callback(null, comments);
+    }
+  });
+};
+
+module.exports.selectAllPlantsComments = (idplant, callback) => {
+  // get all comments with a specific plant id
+  connection.query(`SELECT * FROM comments WHERE idplant = ${idplant}`, (err, comments) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      // send back comments
+      const commentHolder = [];
+      _.forEach(comments, (comment, index) => {
+        module.exports.selectUserById(comment.iduser, (err2, user) => {
+          if (err2) {
+            callback(err2, null);
+          } else {
+            comment.username = user.username;
+            commentHolder.push(comment);
+            if (index === comments.length - 1) {
+              callback(null, commentHolder);
+            }
+          }
+        });
+      });
+      callback(null, comments);
+    }
+  });
+};
+
+module.exports.deletePlant = (idplant, callback) => {
+  // delete from comments first
+  connection.query(`DELETE FROM comments WHERE idplant = ${idplant}`, (err) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      // then delete from usersliked
+      connection.query(`DELETE FROM usersLiked WHERE idplant = ${idplant}`, (err2) => {
+        if (err2) {
+          callback(err2, null);
+        } else {
+          // then delete from usersplants
+          connection.query(`DELETE FROM usersPlants WHERE idplant = ${idplant}`, (err3) => {
+            if (err3) {
+              callback(err3, null);
+            } else {
+              // finally delete from the plants table
+              connection.query(`DELETE FROM plants WHERE id = ${idplant}`, (err4) => {
+                if (err4) {
+                  callback(err4, null);
+                } else {
+                  // get the remaining plants
+                  module.exports.selectAllPlants((err5, plants) => {
+                    if (err5) {
+                      callback(err5, null);
+                    } else {
+                      // send back the plants
+                      callback(null, plants);
+                    }
+                  });
+                }
+              });
+            }
+          });
+        }
+      });
+    }
+  });
+};
+
+module.exports.selectAllToggledOnPlants = (callback) => {
+  connection.query('SELECT * FROM plants WHERE toggled = 0', (err, plants) => {
+    if (err) {
+      callback(err, null);
+    } else {
+      const plantHolder = [];
+      _.forEach(plants, (plant, index) => {
+        module.exports.selectPlantImage(plant.plant, (err2, imagelink) => {
+          if (err2) {
+            callback(err2, null);
+          } else {
+            plant.imagelink = imagelink;
+            plantHolder.push(plant);
+            if (index === plants.length - 1) {
+              callback(null, plantHolder);
+            }
+          }
+        });
+      });
+    }
+  });
+};

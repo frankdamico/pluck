@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import ReactDOM from 'react-dom';
+import axios from 'axios';
 import NavBar from './components/Nav.jsx';
 import UserProfile from './components/UserProfile.jsx';
 import ZipCode from './components/Zip-code.jsx';
@@ -11,9 +12,8 @@ import ViewPlantProfile from './components/ViewPlantProfile.jsx';
 import CreatePlantProfile from './components/CreatePlantProfile.jsx';
 import MyProfile from './components/myProfile.jsx';
 import MapView from './components/MapView.jsx';
-import SampleData from "./components/SampleData";
-import axios from 'axios';
- 
+// import SampleData from "./components/SampleData";
+
 
 class App extends React.Component {
   constructor(props) {
@@ -36,13 +36,26 @@ class App extends React.Component {
     this.forceUpdate(); // rerenders page when components state or props change
   }
 
+  getALocation() {
+    function displayLocationInfo(position) {
+      const lng = position.coords.longitude;
+      const lat = position.coords.latitude;
+
+      console.log(`longitude: ${lng} | latitude: ${lat}`);
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(displayLocationInfo);
+    }
+  }
+
   // function gets called when submit button is clicked in zipcode view
   zipCodeSubmit(userZip) {
     // get req to server
-    axios.get(`/user/zipcode?zipcode=${userZip.zipcode}`)
+    axios.get(`/zipcode?zipcode=${userZip.zipcode}`)
     // server will grab plants in this zipcode from db and send back
       .then((res) => {
-        console.log(res.data);
+        console.log('here', res.data);
         // data state in index component will be updated to those plants
         this.setState({
           plants: res.data,

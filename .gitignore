@@ -3,9 +3,9 @@ node_modules/
 bower_components/
 *.log
 build/
+bundle.js
 client/dist/
 client/dist/bundle.js
 .env
 database/sensitive-data.js
 package-lock.json
-bundle.js

@@ -23,6 +23,16 @@ app.get('/allplants', (req, res) => {
   });
 });
 
+app.get('/toggledonplants', (req, res) => {
+  dbHelpers.selectAllToggledOnPlants((err, plants) => {
+    if (err) {
+      res.status(500).send('Problem occured while reteiving plants');
+    } else {
+      res.status(200).send(plants);
+    }
+  });
+});
+
 // SERVER ROUTES
 // They seem to be working as intended through postman requests. The post routes may need to change from req.body to req.query. Im not sure
 
@@ -60,7 +70,7 @@ app.post('/plant/user', (req, res) => {
           res.status(500).send('Something went wrong while saving plant to the database');
         } else {
           // send back the newly created plant
-          res.status(204).send(data);
+          res.status(200).send(data);
         }
       });
     }
@@ -115,7 +125,15 @@ app.put('/user/login', (req, res) => {
       res.status(500).send('Invalid Username or Password');
     } else {
       // send back the user's data
-      res.status(202).send(user);
+      dbHelpers.selectAllUsersPlants(user.id, (err, plants) => {
+        if (plants) {
+          user.plants = plants;
+          res.status(202).send(user);
+        } else {
+          console.log('could not retrieve user plants');
+        }
+      });
+      // res.status(202).send(user);
     }
   });
 });
@@ -174,21 +192,50 @@ app.post('/newuser', (req, res) => {
       res.status(500).send('Invalid Field');
     } else {
       // send back the new user's data
-      res.status(204).send(data);
+      res.status(200).send(data);
     }
   });
 });
 
 app.put('/likes', (req, res) => {
+  // like or dislike a plant and update it's counter
   dbHelpers.updateUserLikedPlant(parseInt(req.body.iduser), parseInt(req.body.idplant), (err, data) => {
     if (err) {
       res.status(500).send('Something went wrong while trying to update user');
     } else {
+      // send the plant data if likeing the plant
       res.status(202).send(data);
     }
   });
 });
 
+app.delete('/plant', (req, res) => {
+  // delete a plant and all refrences to it in the database
+  dbHelpers.deletePlant(req.body.idplant, (err, remainingPlants) => {
+    if (err) {
+      res.status(500).send('Error in deletion of plant from the database');
+    } else {
+      // send back the remaining plants
+      res.status(200).send(remainingPlants);
+    }
+  });
+});
+
+app.post('/comments', (req, res) => {
+  // add a specific user's comment to a specific plant
+  dbHelpers.insertComment(parseInt(req.body.iduser), parseInt(req.body.idplant), req.body.comment, (err, comment) => {
+    if (err) {
+      res.status(500).send('Error in saving new comment to database');
+    } else {
+      // send back the comment
+      res.status(200).send(comment);
+    }
+  });
+});
+
+app.get('/plant/comments', (req, res) => {
+
+});
 // function to catch get from client plant list view
 //   get req to api for directions to plant
 //   should send location/address of plant
@@ -196,6 +243,7 @@ app.put('/likes', (req, res) => {
 const port = process.env.PORT || 3001;
 
 // Listen and console log current port //
+
 app.listen(port, () => {
   console.log(`listening on port ${port}!`);
 });

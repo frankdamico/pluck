@@ -63,11 +63,11 @@ const possibleFinalGardenArray = {
   Zucchini: 'https://i.imgur.com/pNHF6S6h.jpg',
 };
 
-// _.forEach(possibleFinalGardenArray, (link, planttype) => {
-//   connection.insertPlantData(planttype, link, (err, res) => {
-//     console.log(res);
-//   });
-// });
+_.forEach(possibleFinalGardenArray, (link, planttype) => {
+  connection.insertPlantData(planttype, link, (err, res) => {
+    console.log(res);
+  });
+});
 
 // connection.updateUserLikedPlant(1, 1, (err, res) => {
 //   console.log(err, res);
