@@ -58,18 +58,25 @@ class UserLogin extends React.Component {
   // function that sends get req to server to retrieve user info
   submitUserInfo() {
     const { username, password } = this.state;
-
     this.props.onSubmit({ username, password }); // function from index.jsx --> gets plants from users zip
-
-    // brought to list view
-    // set state of redirect and loggedin to true
-    // set state is async, hence the set timeout (there is a better way to do this)
-    setTimeout(() => {
+    axios({
+      method: 'put',
+      url: '/user/login',
+      data: {
+        username: username,
+        password: password,
+      },
+    }).then((result) => {
       this.setState({
         redirect: true,
         loggedIn: true,
       });
-    }, 1000);
+    }).catch((err) => {
+      console.log(err);
+    });
+    // brought to list view
+    // set state of redirect and loggedin to true
+    // set state is async, hence the set timeout (there is a better way to do this)
   }
 
 
@@ -77,7 +84,7 @@ class UserLogin extends React.Component {
     const { classes } = this.props;
 
     if (this.state.redirect === true && this.state.loggedIn === true) {
-      return <Redirect to="/plantList" />;
+      return <Redirect to="/plantLocation" />;
     }
 
     return (

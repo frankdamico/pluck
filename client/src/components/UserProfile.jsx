@@ -67,7 +67,7 @@ class UserProfile extends React.Component {
       username, password, address, zipcode,
     } = this.state;
     console.log('user info submitted');
-
+    console.log(username, password, address, zipcode);
     this.props.onSubmit({ username, password, address, zipcode }); // func from index.jsx to add user to db
 
     this.setState({

@@ -6,12 +6,29 @@ class MapViewContainer extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      viewport: {
+        zoom: 13,
+        bearing: 0,
+        pitch: 0,
+        width: 500,
+        height: 500,
+      },
+      // popupInfo: null,
     };
     this.getAddress = this.getAddress.bind(this);
-    this.setUserLocation = this.setUserLocation.bind(this);
+    this.onViewportChange = this.onViewportChange.bind(this);
+    this.getLocation = this.getLocation.bind(this);
   }
 
   componentDidMount() {
+    this.getLocation();
+  }
+
+  onViewportChange(viewport) {
+    this.setState({ viewport });
+  }
+
+  getLocation() {
     if (navigator.geolocation) {
       console.log('Geolocation is supported!');
       const geoOptions = {
@@ -19,7 +36,14 @@ class MapViewContainer extends React.Component {
       };
       const geoSuccess = (position) => {
         const currentLoc = [position.coords.latitude, position.coords.longitude];
-        this.setUserLocation(currentLoc);
+        const [latitude, longitude] = currentLoc;
+        this.setState(({ viewport }) => ({
+          viewport: {
+            latitude,
+            longitude,
+            ...viewport,
+          },
+        }));
       };
       const geoError = (error) => {
         console.log('Error occurred. Error code: ', error.code);
@@ -30,13 +54,6 @@ class MapViewContainer extends React.Component {
       console.log('Geolocation is not supported for this Browser/OS.');
     }
   }
-
-  setUserLocation(location) {
-    this.setState({
-      userLoc: location,
-    });
-  }
-
 
   getAddress() {
     axios.get('/health')
@@ -49,14 +66,15 @@ class MapViewContainer extends React.Component {
 
   render() {
     const style = { width: 600, height: 500, marginLeft: 'auto', marginRight: 'auto' };
-    const { userLoc } = this.state;
+    const { viewport } = this.state;
     return (
       <div>
+        <div>Hello World</div><br />
         <div
-          id="map"
-          style={style}
+          // id="map"
+          // style={style}
         />
-        <MapView userLocation={userLoc} />
+        <MapView viewport={viewport} onViewportChange={this.onViewportChange} allPlants={this.props.allPlants} />
       </div>
     );
   }

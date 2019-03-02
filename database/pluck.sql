@@ -28,6 +28,8 @@ CREATE TABLE plants (
   description TEXT (4294967295) NOT NULL,
   toggled BOOLEAN DEFAULT 0,
   likes INT NOT NULL DEFAULT 0,
+  longitude FLOAT(23) NOT NULL,
+  latitude FLOAT(23) NOT NULL,
   PRIMARY KEY (id)
 );
 

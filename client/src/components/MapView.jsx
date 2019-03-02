@@ -1,6 +1,15 @@
 import React, { Component } from 'react';
+import { render } from 'react-dom';
 import MapGL, { Marker, Popup, NavigationControl } from 'react-map-gl';
 import config from '../../../config';
+// import PlantPin from './plant-pin.jsx';
+// import PlantInfo from './plant-info.jsx';
+// import { GeolocateControl } from 'react-map-gl';
+
+import CityPin from './city-pin.jsx';
+import CityInfo from './city-info.jsx';
+
+import CITIES from './cities.js';
 
 const TOKEN = config.pubKey; // Set your mapbox token here
 const navStyle = {
@@ -13,53 +22,84 @@ export default class MapView extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      viewport: {
-        latitude: 37.785164,
-        longitude: -100,
-        zoom: 2.8,
-        bearing: 0,
-        pitch: 0,
-        width: 500,
-        height: 500,
-      },
+      viewport: props.viewport,
       popupInfo: null,
     };
-    this.renderPopup = this.renderPopup.bind(this);
     this.updateViewport = this.updateViewport.bind(this);
+    this.renderCityMarker = this.renderCityMarker.bind(this);
+    this.renderPopup = this.renderPopup.bind(this);
+
+  }
+
+  componentWillReceiveProps({ viewport: newViewPort }) {
+    this.setState({
+      viewport: newViewPort,
+    });
   }
 
   updateViewport(viewport) {
-    this.setState({ viewport });
+    const { viewport: { latitude, longitude }} = this.props;
+    this.setState({ 
+      viewport: {
+        latitude,
+        longitude,
+        ...viewport,
+      } });
+  }
+
+  renderCityMarker(city, index) {
+    return (
+      <Marker
+        key={`marker-${index}`}
+        longitude={city.longitude}
+        latitude={city.latitude}
+      >
+        <CityPin size={20} onClick={() => this.setState({ popupInfo: city })} />
+      </Marker>
+    );
   }
 
   renderPopup() {
     const { popupInfo } = this.state;
+
     return popupInfo && (
-      <Popup
-        tipSize={5}
-        anchor="bottom-right"
-        longitude={popupInfo.state.longitude}
-        latitude={popupInfo.state.latitude}
-        onClose={() => this.setState({ popupInfo: null })}
-        closeOnClick
+      <Popup tipSize={5}
+        anchor="top"
+        longitude={popupInfo.longitude}
+        latitude={popupInfo.latitude}
+        closeOnClick={false}
+        onClose={() => this.setState({ popupInfo: null })} 
       >
-        <p>TEST</p>
+        <CityInfo info={popupInfo} />
       </Popup>
     );
   }
 
+
   render() {
+    // debugger;
     const { popupInfo, viewport } = this.state;
+    const { allPlants } = this.props;
     return (
       <MapGL
         {...viewport}
-        mapStyle="mapbox://styles/mapbox/dark-v9"
+        mapStyle="mapbox://styles/mapbox/basic-v9"
         mapboxApiAccessToken={TOKEN}
         onViewportChange={this.updateViewport}
       >
+        {/* <GeolocateControl
+          positionOptions={{ enableHighAccuracy: true }}
+          trackUserLocation={true}
+          onViewportChange={this._updateViewport}
+        /> */}
+        {/* {CITIES.map(this.renderPlantMarker)} */}
+        {/* {CITIES.map(this.renderCityMarker)} */}
+        {allPlants.map(this.renderCityMarker)}
+
         {this.renderPopup()}
+
         <div className="nav" style={navStyle}>
-          <NavigationControl />
+          <NavigationControl onViewportChange={this.updateViewport} />
         </div>
       </MapGL>
     );

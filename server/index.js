@@ -28,7 +28,7 @@ app.get('/allplants', (req, res) => {
 app.get('/toggledonplants', (req, res) => {
   dbHelpers.selectAllToggledOnPlants((err, plants) => {
     if (err) {
-      res.status(500).send('Problem occured while reteiving plants');
+      res.status(500).send('Problem occured while retrieving plants');
     } else {
       res.status(200).send(plants);
     }
@@ -201,7 +201,7 @@ app.get('/zipcode', (req, res) => {
               filteredPlant.comments = plantComments;
               plantsWithComments.push(filteredPlant);
               if (index === filteredPlants.length - 1) {
-                res.status(200).send(_.map(_.sortBy(_.concat(plantsWithComments, unfilteredPlants), ['id']), ((finalplant) => {
+                res.status(200).send(_.filter(_.map(_.sortBy(_.concat(plantsWithComments, unfilteredPlants), ['id']), ((finalplant) => {
                   if (!finalplant.comments) {
                     finalplant.comments = [];
                     finalplant.numComments = 0;
@@ -209,7 +209,7 @@ app.get('/zipcode', (req, res) => {
                   }
                   finalplant.numComments = finalplant.comments.length;
                   return finalplant;
-                })));
+                })), toggled => toggled.toggled === 0));
               }
             }
           });

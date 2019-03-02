@@ -12,6 +12,7 @@ import ViewPlantProfile from './components/ViewPlantProfile.jsx';
 import CreatePlantProfile from './components/CreatePlantProfile.jsx';
 import MyProfile from './components/myProfile.jsx';
 import MapView from './components/MapView.jsx';
+import MapViewContainer from './components/MapViewContainer.jsx';
 // import SampleData from "./components/SampleData";
 
 
@@ -25,14 +26,18 @@ class App extends React.Component {
       zipcode: '',
       userId: '',
       userPlants: [],
+      allPlants: [],
     };
 
     // bind to this all functions being handed down
     this.zipCodeSubmit = this.zipCodeSubmit.bind(this);
     this.userLogin = this.userLogin.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.getAllPlants = this.getAllPlants.bind(this);
   }
 
   componentDidMount() {
+    // this.getAllPlants();
     this.forceUpdate(); // rerenders page when components state or props change
   }
 
@@ -107,6 +112,7 @@ class App extends React.Component {
     })
       .then((res) => {
         // set states with all user info
+        console.log(res.data);
         this.setState({
           userId: res.data.id,
           zipcode: res.data.zipcode,
@@ -114,11 +120,34 @@ class App extends React.Component {
         });
 
         // get all plants in new users zipcode
+        this.getAllPlants();
         this.zipCodeSubmit({ zipcode: this.state.zipcode });
       })
       .catch((err) => { console.log(err); });
   }
 
+  getAllPlants() {
+    console.log('get all plants called');
+    axios({
+      method: 'get',
+      url: '/toggledonplants',
+    })
+      .then((res) => {
+        console.log(res);
+        this.setState({
+          allPlants: res.data,
+        });
+      })
+      .catch((err) => {
+        console.log(err, 'could not retrieve all plants');
+      });
+  }
+
+  handleChange(name) {
+    return (event) => {
+      this.setState({ [name]: event.target.checked });
+    };
+  }
 
   render() {
     return (
@@ -131,12 +160,13 @@ class App extends React.Component {
             <Switch>
               <Route path="/" render={() => <ZipCode onSubmit={this.zipCodeSubmit} />} exact />
               <Route path="/userProfile" render={() => <UserProfile plants={this.state.plants} onSubmit={this.submitUserInfo} />} />
-              <Route path="/plantList" render={() => <PlantList plants={this.state.plants} />} />
+              <Route path="/plantList" render={() => <PlantList plants={this.state.plants} />} />              <Route path="/plantList" component={MapViewContainer} />
               <Route path="/userLogin" render={() => <UserLogin plants={this.state.plants} zipcode={this.state.zipcode} onSubmit={this.userLogin} />} />
               <Route path="viewPlantProfile" render={() => <ViewPlantProfile userId={this.state.userId} />} />
-              <Route path="/submitPlant" render={() => <CreatePlantProfile userId={this.state.userId} username={this.state.username} />} />
-              <Route path="/myProfile" render={() => <MyProfile zipcode={this.state.zipcode} plants={this.state.userPlants} username={this.state.username} />} />
-              <Route path="/plantLocation" component={MapView} />
+              <Route path="/submitPlant" render={() => <CreatePlantProfile userId={this.state.userId} username={this.state.username} getAllPlants={this.getAllPlants} />} />
+              <Route path="/myProfile" render={() => <MyProfile zipcode={this.state.zipcode} plants={this.state.userPlants} username={this.state.username} id={this.state.userId} handleChange={this.handleChange} />} />
+              <Route path="/plantLocation" render={() => <MapViewContainer allPlants={this.state.allPlants} />} />
+
               <Route component={Error} />
             </Switch>
           </div>

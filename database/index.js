@@ -2,6 +2,7 @@ const mysql = require('mysql');
 const _ = require('lodash');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
 const connection = mysql.createConnection({
   host: process.env.DBHOST,
@@ -173,32 +174,40 @@ module.exports.selectAllPlants = (callback) => {
 // add a plant to the database and assign the plant to a specific user //
 module.exports.insertPlant = (iduser, plant, address, zipcode, description, callback) => {
   // assign insertion properties
-  const q = [plant, address, zipcode, description];
-  // insert into databases
-  connection.query('INSERT INTO plants (plant, address, zipcode, description) VALUES (?, ?, ?, ?)', q, (err) => {
-    if (err) {
-      callback(err, null);
-    } else {
-      // get all current plants
-      module.exports.selectAllPlants((err2, oldPlants) => {
-        if (err2) {
-          callback(err2, null);
+  const goodAddress = _.filter(address.split(''), letter => letter !== '#').join('');
+  axios.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/${goodAddress}.json?types=address&access_token=pk.eyJ1Ijoib3Bmcm5kIiwiYSI6ImNqc21odTF2bzAxcG00M293ODBlZzRyNWkifQ.nHZlATI4NkhQgU579snn9Q`)
+    .then((result) => {
+      const longitude = result.data.features[0].center[0];
+      const latitude = result.data.features[0].center[1];
+      const q = [plant, address, zipcode, description, longitude, latitude];
+      // insert into databases
+      connection.query('INSERT INTO plants (plant, address, zipcode, description, longitude, latitude) VALUES (?, ?, ?, ?, ?, ?)', q, (err) => {
+        if (err) {
+          callback(err, null);
         } else {
-          // get the plant that we just added
-          const mostRecent = oldPlants[oldPlants.length - 1];
-          // assign that plant to a user
-          module.exports.insertUserPlant(iduser, mostRecent.id, (err3, userPlant) => {
-            if (err3) {
-              callback(err3, null);
+          // get all current plants
+          module.exports.selectAllPlants((err2, oldPlants) => {
+            if (err2) {
+              callback(err2, null);
             } else {
-              // return the new table data row
-              callback(null, userPlant);
+              // get the plant that we just added
+              const mostRecent = oldPlants[oldPlants.length - 1];
+              // assign that plant to a user
+              module.exports.insertUserPlant(iduser, mostRecent.id, (err3, userPlant) => {
+                if (err3) {
+                  callback(err3, null);
+                } else {
+                  // return the new table data row
+                  callback(null, userPlant);
+                }
+              });
             }
           });
         }
       });
-    }
-  });
+    }).catch((err) => {
+      callback(err, null);
+    });
 };
 
 // module.exports

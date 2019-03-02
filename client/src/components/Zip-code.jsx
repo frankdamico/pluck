@@ -12,6 +12,8 @@ import OutlinedInput from '@material-ui/core/OutlinedInput';
 import { Redirect } from 'react-router-dom';
 import Button from '@material-ui/core/Button';
 
+import logo from '../images/PLUCK-logo-02.png';
+
 const styles = theme => ({
   container: {
     display: 'block',

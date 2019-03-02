@@ -17,6 +17,7 @@ import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 
+
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 
@@ -104,20 +105,20 @@ class ButtonAppBar extends React.Component {
     this.state = {
       open: false,
     };
-    this.handleDrawerOpen = this.handleDrawerOpen.bind(this);
-    this.handleDrawerClose = this.handleDrawerClose.bind(this);
+    // this.handleDrawerOpen = this.handleDrawerOpen.bind(this);
+    // this.handleDrawerClose = this.handleDrawerClose.bind(this);
   }
 
   // Drawer = left side pop out navigation
-  handleDrawerOpen() {
-    this.setState({
-      open: true,
-    });
-  }
+  // handleDrawerOpen() {
+  //   this.setState({
+  //     open: true,
+  //   });
+  // }
 
-  handleDrawerClose() {
-    this.setState({ open: false });
-  }
+  // handleDrawerClose() {
+  //   this.setState({ open: false });
+  // }
 
   render() {
     const { classes, signUser, logUser } = this.props;
@@ -140,18 +141,22 @@ class ButtonAppBar extends React.Component {
                 onClick={this.handleDrawerOpen}
                 className={classNames(classes.menuButton, open && classes.hide)}
               >
-                <MenuIcon />
+              {/* removed hamburger */}
+                {/* <MenuIcon /> */}
               </IconButton>
-              <NavLink to="/"> <img className="logo" src={require('../images/pluck.png')}></img></NavLink>
+              <NavLink to="/"> <img className="logo" alt="" src={require('../images/pluck.png')} /></NavLink>
               <Typography variant="h6" color="inherit" className={classes.grow}>
                         p l u c k
               </Typography>
 
-              <NavLink to="/userProfile" style={{ color: 'white', textDecoration: 'none' }}> <Button color="inherit" onClick={signUser}>Signup</Button> </NavLink>
-              <NavLink to="/userLogin" style={{ color: 'white', textDecoration: 'none' }}><Button color="inherit" onClick={logUser}>Login / Logout</Button> </NavLink>
+              <NavLink to="/plantLocation" style={{ color: 'white', textDecoration: 'none' }}> <Button color="inherit">View Map  </Button> </NavLink>
+              <NavLink to="/" style={{ color: 'white', textDecoration: 'none' }}> <Button color="inherit">Change Location  </Button> </NavLink>
+              <NavLink to="/MyProfile" style={{ color: 'white', textDecoration: 'none' }}> <Button color="inherit">My Plants  </Button> </NavLink>
+              <NavLink to="/userLogin" style={{ color: 'white', textDecoration: 'none' }}><Button color="inherit" onClick={logUser}>  Login / Logout</Button> </NavLink>
+              <NavLink to="/userProfile" style={{ color: 'white', textDecoration: 'none' }}> <Button color="inherit" onClick={signUser}>  Signup</Button> </NavLink>
             </Toolbar>
           </AppBar>
-          <Drawer
+          {/* <Drawer
             className={classes.drawer}
             variant="persistent"
             anchor="left"
@@ -194,7 +199,7 @@ class ButtonAppBar extends React.Component {
               </NavLink>
 
             </List>
-          </Drawer>
+          </Drawer> */}
         </MuiThemeProvider>
       </div>
     );
